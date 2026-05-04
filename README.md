@@ -44,7 +44,7 @@ pip install requests psycopg2-binary python-dotenv
 ### 3. Criar o ficheiro `.env`
 
 ```bash
-cp .env.example .env
+cp .env
 ```
 
 Editar o `.env` com as tuas credenciais:
@@ -54,12 +54,11 @@ Editar o `.env` com as tuas credenciais:
 BITRIX_URL=https://dominio.bitrix24.com
 BITRIX_TOKEN=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 
-# PostgreSQL (exemplo Neon)
-PG_HOST=db.xxxxxxxxxxxx.neon.co
-PG_PORT=
-PG_DB=postgres
-PG_USER=postgres
-PG_PASSWORD=a_tua_password
+# PostgreSQL no Neon
+SERVER=
+DATABASE=
+USERNAME=
+PASSWORD=
 
 # Sincronização
 BATCH_SIZE=50
@@ -74,12 +73,10 @@ LOOKBACK_MINS=20
 psql -U postgres -d postgres -f DW_Energia-v1.sql
 ```
 
-Ou, no Supabase, vai a **SQL Editor** e cola o conteúdo do ficheiro.
-
 ### 5. Primeira sincronização (carga completa)
 
 ```bash
-python sync_bitrix.py --full
+python sincro_bitrix.py --full
 ```
 
 ---
@@ -91,7 +88,7 @@ python sync_bitrix.py --full
 Busca apenas os negócios modificados desde a última execução, com uma janela de segurança de 20 minutos para não perder registos.
 
 ```bash
-python sync_bitrix.py
+python sincro_bitrix.py
 ```
 
 ### Sync completo
@@ -99,46 +96,8 @@ python sync_bitrix.py
 Recarrega todos os negócios do Bitrix. Usar apenas na primeira vez ou para reconstruir a base de dados.
 
 ```bash
-python sync_bitrix.py --full
+python sincro_bitrix.py --full
 ```
-
----
-
-## Agendamento automático
-
-### Linux / macOS (cron)
-
-```bash
-crontab -e
-```
-
-Adicionar a linha para executar a cada 15 minutos:
-
-```
-*/15 * * * * cd /caminho/do/projeto && python sync_bitrix.py >> sync_log.txt 2>&1
-```
-
-### Windows (Agendador de Tarefas)
-
-```cmd
-schtasks /create /sc minute /mo 15 /tn "SyncBitrix" /tr "python C:\caminho\sync_bitrix.py"
-```
-
----
-
-## Como obter o token do Bitrix
-
-1. No Bitrix24, ir a **Configurações → Integrações → Webhooks de entrada**
-2. Clicar em **Adicionar webhook**
-3. Seleccionar a permissão **CRM** (apenas leitura)
-4. Copiar o URL gerado — tem o formato:
-   ```
-   https://seudominio.bitrix24.com/rest/1/xxxxxxxxxxxxxxxx/
-   ```
-5. O `BITRIX_URL` é `https://seudominio.bitrix24.com`
-6. O `BITRIX_TOKEN` é o código após `/rest/1/` (ex: `xxxxxxxxxxxxxxxx`)
-
----
 
 ## Campos sincronizados
 
@@ -163,27 +122,6 @@ O mapeamento completo está na variável `FIELD_MAP` do script.
 
 ---
 
-## Views disponíveis para Power BI
-
-Após a sincronização, estas views estão prontas para ligar directamente ao Power BI:
-
-| View | Descrição |
-|---|---|
-| `v_ganhos_por_operadora` | Negócios ganhos por mês, operadora, segmento e distrito |
-| `v_pipeline_atual` | Negócios em aberto por fase e comercial |
-| `v_performance_comercial` | Taxa de conversão e valor ganho por comercial/campanha |
-| `v_instalacoes` | CPE/CUI com consumos, margens e tarifas |
-| `v_negocios_perdidos` | Análise de motivos KO e anulados |
-
-### Ligar ao Power BI
-
-1. **Obter Dados → Base de dados PostgreSQL**
-2. Servidor: `db.xxxxxxxxxxxx.supabase.co` (ou o teu host)
-3. Base de dados: `postgres`
-4. Modo: **Import** (recomendado) ou DirectQuery
-5. Seleccionar as views pretendidas
-
----
 
 ## Estrutura da fase (`fase_grupo`)
 
@@ -250,3 +188,5 @@ Reduzir o `BATCH_SIZE` no `.env` para 25 ou aumentar o intervalo do cron.
 
 Uso interno. Todos os direitos reservados.
 # sincronizacao-dados-bitrix
+
+PEGADAMOTRIZ @2026
